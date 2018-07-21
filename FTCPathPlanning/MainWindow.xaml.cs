@@ -166,6 +166,7 @@ namespace FTCPathPlanning
                 Path prev = Paths.Items[Paths.Items.Count - 2] as Path;
                 p.SetStartPoint(prev.EndX, prev.EndY);
             }
+
             RelativePoint start = makeGuidePoint();
             RelativePoint end = makeGuidePoint();
 
@@ -187,6 +188,8 @@ namespace FTCPathPlanning
 
             Plotter.Children.Add(start);
             Plotter.Children.Add(end);
+            p.OwnedPoints.Add(start);
+            p.OwnedPoints.Add(end);
 
             if(p is QuadraticPath)
             {
@@ -201,6 +204,7 @@ namespace FTCPathPlanning
                 mid.SetBinding(RelativePoint.YPositionProperty, gy);
 
                 Plotter.Children.Add(mid);
+                p.OwnedPoints.Add(mid);
             }
         }
 
@@ -218,6 +222,25 @@ namespace FTCPathPlanning
         private void Plotter_SizeChanged(object sender, SizeChangedEventArgs e)
         {
             //todo re-render the path plots
+        }
+
+        private void Paths_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            Path selection = e.AddedItems[0] as Path;
+            if (selection != null)
+            {
+                foreach (Path path in Paths.Items)
+                {
+                    foreach (RelativePoint rp in path.OwnedPoints)
+                    {
+                        rp.Visibility = Visibility.Collapsed;
+                    }
+                }
+                foreach(RelativePoint rp in selection.OwnedPoints)
+                {
+                    rp.Visibility = Visibility.Visible;
+                }
+            }
         }
     }
 }

@@ -46,7 +46,6 @@
                     </TransformGroup>
                 </Image.RenderTransform>
             </Image>
-            <Polyline Name="Action1" Stroke="DarkOrange" StrokeThickness="2"/>
         </Canvas>
         <StackPanel Grid.Column="0" Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center"
                     local:Extensions.Spacing="3 0 0 0" local:Extensions.TrimFirst="True">
@@ -76,7 +75,7 @@
                 </StackPanel>
                 <Separator Foreground="Gray"/>
             </StackPanel>
-            <wpf:CollectionControl ItemAdded="Paths_ItemAdded" Grid.Row="1" Name="Paths" PropertiesLabel="Path Settings:" TypeSelectionLabel="Path Type:"/>
+            <wpf:CollectionControl Selector.SelectionChanged="Paths_SelectionChanged" ItemAdded="Paths_ItemAdded" Grid.Row="1" Name="Paths" PropertiesLabel="Path Settings:" TypeSelectionLabel="Path Type:"/>
         </Grid>
     </Grid>
 </Window>

@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using Xceed.Wpf.Toolkit.PropertyGrid.Attributes;
 using Matrices;
+using System.Windows.Shapes;
 
 namespace FTCPathPlanning
 {
@@ -14,6 +15,16 @@ namespace FTCPathPlanning
     [CategoryOrder("End Position", 100)]
     public abstract class Path : BindableBase
     {
+        public readonly List<RelativePoint> OwnedPoints = new List<RelativePoint>();
+        public Polyline OwnedPolyline;
+
+        protected List<string> newProps = new List<string>();
+        private void updateNewProps()
+        {
+            foreach (string s in newProps)
+                OnPropertyChanged(s);
+        }
+
         double startX;
         [Category("Start Position")]
         [DisplayName("X")]
@@ -28,6 +39,7 @@ namespace FTCPathPlanning
             {
                 SetProperty(ref startX, value);
                 OnPropertyChanged("FullLength");
+                updateNewProps();
             }
         }
 
@@ -45,6 +57,7 @@ namespace FTCPathPlanning
             {
                 SetProperty(ref startY, value);
                 OnPropertyChanged("FullLength");
+                updateNewProps();
             }
         }
 
@@ -62,6 +75,7 @@ namespace FTCPathPlanning
             {
                 SetProperty(ref endX, value);
                 OnPropertyChanged("FullLength");
+                updateNewProps();
             }
         }
 
@@ -79,6 +93,7 @@ namespace FTCPathPlanning
             {
                 SetProperty(ref endY, value);
                 OnPropertyChanged("FullLength");
+                updateNewProps();
             }
         }
 
@@ -124,6 +139,12 @@ namespace FTCPathPlanning
     [CategoryOrder("Guide Point", 2)]
     public class QuadraticPath : Path
     {
+        public QuadraticPath()
+        {
+            newProps.Add("Seg1Length");
+            newProps.Add("Seg2Length");
+        }
+
         double gx;
         [Category("Guide Point")]
         [DisplayName("X")]
@@ -164,6 +185,7 @@ namespace FTCPathPlanning
 
         [Category(null)]
         [DisplayName("First Segment Length")]
+        [PropertyOrder(1)]
         [Editor(typeof(RangedPositionEditor), typeof(RangedPositionEditor))]
         public double Seg1Length
         {
@@ -175,6 +197,7 @@ namespace FTCPathPlanning
 
         [Category(null)]
         [DisplayName("Second Segment Length")]
+        [PropertyOrder(2)]
         [Editor(typeof(RangedPositionEditor), typeof(RangedPositionEditor))]
         public double Seg2Length
         {
