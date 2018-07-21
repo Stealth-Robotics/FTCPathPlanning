@@ -109,6 +109,19 @@ namespace FTCPathPlanning
             }
         }
 
+        public List<Point> GeneratePath(double interval)
+        {
+            List<Point> path = new List<Point>();
+            int direction = Math.Sign(EndX - StartX);
+            CubicFunction func = GetFunction();
+            for(double x = StartX; direction == 1 ? x < EndX : x > EndX; x += direction * interval)
+            {
+                path.Add(new Point(x, func.Evaluate(x)));
+            }
+            path.Add(new Point(EndX, func.Evaluate(EndX)));
+            return path;
+        }
+
         public abstract CubicFunction GetFunction();
 
         public void SetStartPoint(double x, double y)

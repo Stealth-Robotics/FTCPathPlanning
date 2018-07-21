@@ -206,6 +206,7 @@ namespace FTCPathPlanning
                 Plotter.Children.Add(mid);
                 p.OwnedPoints.Add(mid);
             }
+            //todo add polyline
         }
 
         SolidColorBrush darkOrange = new SolidColorBrush(Colors.DarkOrange);
@@ -241,6 +242,32 @@ namespace FTCPathPlanning
                     rp.Visibility = Visibility.Visible;
                 }
             }
+        }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            //this will become the basis of RenderPath function.
+            Polyline l = new Polyline();
+            l.Stroke = darkOrange;
+            l.StrokeThickness = 2;
+            Panel.SetZIndex(l, 2);
+            List<Point> untransformed = (Paths.SelectedItem as Path).GeneratePath(0.1);
+            foreach(Point p in untransformed)
+            {
+                double x = ftToPx(p.X, false);
+                double y = ftToPx(p.Y, true);//don't need to invert Y because the polyline wants to maintain coordinate system
+                l.Points.Add(new Point(x, y));
+            }
+            Plotter.Children.Add(l);
+        }
+
+        private void Paths_ItemDeleted(object sender, ItemEventArgs e)
+        {
+            foreach(RelativePoint rp in (e.Item as Path).OwnedPoints)
+            {
+                Plotter.Children.Remove(rp);
+            }
+            //todo remove polyline
         }
     }
 }

@@ -73,9 +73,11 @@
                     <wpf:DoubleUpDown Name="originAngle" Style="{StaticResource positionalSpinner}" ValueChanged="originAngle_ValueChanged"
                                       ClipValueToMinMax="False" Minimum="{x:Null}" Maximum="{x:Null}" Increment="5"/>
                 </StackPanel>
+                <Button Content="Draw Path (test)" Click="Button_Click"/>
                 <Separator Foreground="Gray"/>
             </StackPanel>
-            <wpf:CollectionControl Selector.SelectionChanged="Paths_SelectionChanged" ItemAdded="Paths_ItemAdded" Grid.Row="1" Name="Paths" PropertiesLabel="Path Settings:" TypeSelectionLabel="Path Type:"/>
+            <wpf:CollectionControl Selector.SelectionChanged="Paths_SelectionChanged" ItemDeleted="Paths_ItemDeleted"
+                                   ItemAdded="Paths_ItemAdded" Grid.Row="1" Name="Paths" PropertiesLabel="Path Settings:" TypeSelectionLabel="Path Type:"/>
         </Grid>
     </Grid>
 </Window>
