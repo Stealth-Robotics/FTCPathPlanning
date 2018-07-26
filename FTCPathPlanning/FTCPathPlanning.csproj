@@ -77,6 +77,7 @@
     </ApplicationDefinition>
     <Compile Include="BindableBase.cs" />
     <Compile Include="CubicFunction.cs" />
+    <Compile Include="NonDependencyBinding.cs" />
     <Compile Include="PathDescriptors.cs" />
     <Compile Include="RangedPositionEditor.cs" />
     <Compile Include="RelativePoint.cs" />

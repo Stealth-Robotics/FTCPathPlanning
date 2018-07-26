@@ -78,11 +78,6 @@ namespace FTCPathPlanning
             Canvas.SetLeft(originHeading, Plotter.ActualWidth / 2);
             Canvas.SetTop(originHeading, Plotter.ActualHeight / 2);
 
-            List<Type> pathTypes = new List<Type>();
-            pathTypes.Add(typeof(LinearPath));
-            pathTypes.Add(typeof(QuadraticPath));
-            Paths.NewItemTypes = pathTypes;
-
             //test area
         }
 
@@ -153,9 +148,9 @@ namespace FTCPathPlanning
                 originAngle.Value += 360;
         }
 
-        private void Paths_ItemAdded(object sender, ItemEventArgs e)
+        private void Paths_ItemAdded(object item)
         {
-            Path p = (e.Item as Path);
+            Path p = item as Path;
             if (Paths.Items.Count == 1)
             {
                 //this is the only path
@@ -165,6 +160,8 @@ namespace FTCPathPlanning
             {
                 Path prev = Paths.Items[Paths.Items.Count - 2] as Path;
                 p.SetStartPoint(prev.EndX, prev.EndY);
+                NonDependencyBinding.Create(prev, "EndX", p, "StartX");
+                NonDependencyBinding.Create(prev, "EndY", p, "StartY");
             }
 
             RelativePoint start = makeGuidePoint();
@@ -206,7 +203,22 @@ namespace FTCPathPlanning
                 Plotter.Children.Add(mid);
                 p.OwnedPoints.Add(mid);
             }
-            //todo add polyline
+            RenderPath(p);
+            //everything is now set. attach an event handler to re-render paths
+            p.PropertyChanged += P_PropertyChanged;
+
+        }
+
+        private void P_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == "Name")
+            {
+                
+            }
+            else
+            {
+                RenderPath(sender as Path);
+            }
         }
 
         SolidColorBrush darkOrange = new SolidColorBrush(Colors.DarkOrange);
@@ -222,14 +234,22 @@ namespace FTCPathPlanning
 
         private void Plotter_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            //todo re-render the path plots
+            foreach(Path p in Paths.Items)
+            {
+                RenderPath(p);
+            }
         }
 
         private void Paths_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            if (e.AddedItems.Count == 0) return;
             Path selection = e.AddedItems[0] as Path;
             if (selection != null)
             {
+                Binding nameBinding = new Binding("Name");
+                nameBinding.Source = selection;
+                Props.SetBinding(PropertyGrid.SelectedObjectNameProperty, nameBinding);
+                //Props.SelectedObjectName = selection.Name;
                 foreach (Path path in Paths.Items)
                 {
                     foreach (RelativePoint rp in path.OwnedPoints)
@@ -244,30 +264,73 @@ namespace FTCPathPlanning
             }
         }
 
-        private void Button_Click(object sender, RoutedEventArgs e)
+        private void RenderPath(Path path)
         {
-            //this will become the basis of RenderPath function.
+            if (path.OwnedPolyline != null)
+            {
+                Plotter.Children.Remove(path.OwnedPolyline);
+            }
             Polyline l = new Polyline();
             l.Stroke = darkOrange;
             l.StrokeThickness = 2;
             Panel.SetZIndex(l, 2);
-            List<Point> untransformed = (Paths.SelectedItem as Path).GeneratePath(0.1);
-            foreach(Point p in untransformed)
+            List<Point> untransformed = path.GeneratePath(0.1);
+            if(untransformed.Count == 1)
+            {
+                //it's an invalid (straight vertical) path
+                untransformed.Clear();
+                untransformed.Add(new Point(path.StartX, path.StartY));
+                untransformed.Add(new Point(path.EndX, path.EndY));
+            }
+            foreach (Point p in untransformed)
             {
                 double x = ftToPx(p.X, false);
-                double y = ftToPx(p.Y, true);//don't need to invert Y because the polyline wants to maintain coordinate system
+                double y = ftToPx(p.Y, true);
                 l.Points.Add(new Point(x, y));
             }
             Plotter.Children.Add(l);
+            path.OwnedPolyline = l;
         }
 
-        private void Paths_ItemDeleted(object sender, ItemEventArgs e)
+        private void Save_Click(object sender, RoutedEventArgs e)
         {
-            foreach(RelativePoint rp in (e.Item as Path).OwnedPoints)
+
+        }
+
+        private void Add_Click(object sender, RoutedEventArgs e)
+        {
+            string name = string.IsNullOrWhiteSpace(NewName.Text) ? (string)PathType.SelectedValue : NewName.Text;
+            NewName.Text = "";
+            Path item = null;
+            switch((string)PathType.SelectedValue)
             {
-                Plotter.Children.Remove(rp);
+                case "Linear Path":
+                    item = new LinearPath(name);
+                    break;
+                case "Quadratic Path":
+                    item = new QuadraticPath(name);
+                    break;
+                default:
+                    return;
             }
-            //todo remove polyline
+            Paths.Items.Add(item);
+            Paths_ItemAdded(item);
+        }
+
+        private void Rename_Click(object sender, RoutedEventArgs e)
+        {
+            Path selected = Paths.SelectedItem as Path;
+            if (selected != null)
+            {
+                string name = string.IsNullOrWhiteSpace(NewName.Text) ? selected.Name : NewName.Text;
+                NewName.Text = "";
+                selected.Name = name;
+            }
+        }
+
+        private void Delete_Click(object sender, RoutedEventArgs e)
+        {
+
         }
     }
 }

@@ -48,17 +48,20 @@
             </Image>
         </Canvas>
         <StackPanel Grid.Column="0" Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center"
-                    local:Extensions.Spacing="3 0 0 0" local:Extensions.TrimFirst="True">
+                    local:Extensions.Spacing="3 0 0 0" Margin="149,8,157,7">
             <Button Name="RotateCCW" Click="RotateCCW_Click" Content="&#x27F2;" FontSize="15" FontWeight="Bold" Padding="5"/>
             <Button Name="FieldSwap" Content="Change Field" Click="FieldSwap_Click" Padding="5"/>
             <Button Name="RotateCW" Click="RotateCW_Click" Content="&#x27F3;" FontSize="15" FontWeight="Bold" Padding="5"/>
         </StackPanel>
-        <Grid Margin="10" Grid.Row="0" Grid.Column="1" Grid.RowSpan="3">
+        <Menu Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Height="20" VerticalAlignment="Top">
+            <MenuItem Header="_Save" Name="Save" Click="Save_Click"/>
+        </Menu>
+        <Grid Margin="10 25 10 10" Grid.Row="0" Grid.Column="1" Grid.RowSpan="3">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
-            <StackPanel local:Extensions.Spacing="0 0 3 0" Grid.Row="0">
+            <StackPanel local:Extensions.Spacing="0 0 0 3" Grid.Row="0">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="Robot Origin: ("/>
                     <!--<TextBox Name="originX" Text="0.00" Width="75" GotFocus="origin_GotFocus" LostFocus="origin_LostFocus"/>-->
@@ -73,11 +76,51 @@
                     <wpf:DoubleUpDown Name="originAngle" Style="{StaticResource positionalSpinner}" ValueChanged="originAngle_ValueChanged"
                                       ClipValueToMinMax="False" Minimum="{x:Null}" Maximum="{x:Null}" Increment="5"/>
                 </StackPanel>
-                <Button Content="Draw Path (test)" Click="Button_Click"/>
                 <Separator Foreground="Gray"/>
             </StackPanel>
-            <wpf:CollectionControl Selector.SelectionChanged="Paths_SelectionChanged" ItemDeleted="Paths_ItemDeleted"
-                                   ItemAdded="Paths_ItemAdded" Grid.Row="1" Name="Paths" PropertiesLabel="Path Settings:" TypeSelectionLabel="Path Type:"/>
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1.5*"/>
+                    <ColumnDefinition Width="2*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <StackPanel Grid.Column="0" Grid.Row="0" local:Extensions.Spacing="0 0 0 3">
+                    <wpf:WatermarkTextBox Watermark="New path name" Name="NewName"/>
+                    <Grid local:Extensions.Spacing="3 0 0 0" local:Extensions.TrimFirst="True">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <ComboBox Grid.Column="0" Name="PathType" SelectedIndex="0" Padding="3">
+                            <ComboBox.Items>
+                                <sys:String>Linear Path</sys:String>
+                                <sys:String>Quadratic Path</sys:String>
+                            </ComboBox.Items>
+                        </ComboBox>
+                        <Button Grid.Column="1" Name="Add" Content="Add" Padding="3" Click="Add_Click"/>
+                    </Grid>
+                </StackPanel>
+                <ListBox Grid.Row="1" Grid.Column="0" Name="Paths" SelectionChanged="Paths_SelectionChanged">
+                    <ListBox.Resources>
+                        <ContextMenu x:Key="ElementMenu">
+                            <MenuItem Header="Rename" Name="Rename" Click="Rename_Click"/>
+                            <MenuItem Header="Delete" Name="Delete" Click="Delete_Click"/>
+                        </ContextMenu>
+                        <Style TargetType="{x:Type ListBoxItem}">
+                            <Setter Property="ContextMenu" Value="{StaticResource ElementMenu}"/>
+                            <!--I clearly don't understand bindings because I didn't expect this to work-->
+                            <Setter Property="Content" Value="{Binding Name}"/>
+                        </Style>
+                    </ListBox.Resources>
+                </ListBox>
+                <wpf:PropertyGrid Grid.Row="0" Grid.Column="1" Grid.RowSpan="2" Name="Props"
+                                  SelectedObject="{Binding ElementName=Paths, Path=SelectedItem}"/>
+            </Grid>
+            <!--<wpf:CollectionControl Selector.SelectionChanged="Paths_SelectionChanged" ItemAdded="Paths_ItemAdded"
+                                   Grid.Row="1" Name="Paths" PropertiesLabel="Path Settings:" TypeSelectionLabel="Path Type:"/>-->
         </Grid>
     </Grid>
 </Window>

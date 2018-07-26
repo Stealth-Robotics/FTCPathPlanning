@@ -25,9 +25,28 @@ namespace FTCPathPlanning
                 OnPropertyChanged(s);
         }
 
+        private string name;
+        [Browsable(false)]
+        public string Name
+        {
+            get
+            {
+                return name;
+            }
+            internal set
+            {
+                SetProperty(ref name, value);
+            }
+        }
+        public Path(string name)
+        {
+            Name = name;
+        }
+
         double startX;
         [Category("Start Position")]
         [DisplayName("X")]
+        [ReadOnly(true)]
         [Editor(typeof(RangedPositionEditor), typeof(RangedPositionEditor))]
         public double StartX
         {
@@ -35,7 +54,7 @@ namespace FTCPathPlanning
             {
                 return startX;
             }
-            private set
+            set
             {
                 SetProperty(ref startX, value);
                 OnPropertyChanged("FullLength");
@@ -46,6 +65,7 @@ namespace FTCPathPlanning
         double startY;
         [Category("Start Position")]
         [DisplayName("Y")]
+        [ReadOnly(true)]
         [Editor(typeof(RangedPositionEditor), typeof(RangedPositionEditor))]
         public double StartY
         {
@@ -53,7 +73,7 @@ namespace FTCPathPlanning
             {
                 return startY;
             }
-            private set
+            set
             {
                 SetProperty(ref startY, value);
                 OnPropertyChanged("FullLength");
@@ -105,7 +125,15 @@ namespace FTCPathPlanning
         {
             get
             {
-                return GetFunction().IntegrateLength(StartX, EndX);
+                if (StartX != EndX)
+                {
+                    return GetFunction().IntegrateLength(StartX, EndX);
+                }
+                else
+                {
+                    //we have an invalid function, so let's get a euclidean distance between endpoints instead
+                    return Math.Sqrt(Math.Pow(EndX - StartX, 2) + Math.Pow(EndY - StartY, 2));
+                }
             }
         }
 
@@ -134,6 +162,8 @@ namespace FTCPathPlanning
     [DisplayName("Linear Path")]
     public class LinearPath : Path
     {
+        public LinearPath(string name) : base(name) { }
+
         public override CubicFunction GetFunction()
         {
             Matrix m = new Matrix(2, 3);
@@ -152,7 +182,7 @@ namespace FTCPathPlanning
     [CategoryOrder("Guide Point", 2)]
     public class QuadraticPath : Path
     {
-        public QuadraticPath()
+        public QuadraticPath(string name) : base(name)
         {
             newProps.Add("Seg1Length");
             newProps.Add("Seg2Length");
@@ -232,8 +262,13 @@ namespace FTCPathPlanning
             m[0, 3] = StartY;
             m[1, 3] = GuidePointY;
             m[2, 3] = EndY;
-            m = m.RREF();
-            return new CubicFunction(0, m[0, 3], m[1, 3], m[2, 3]);
+            m = m.RREF().ToPrecision(10);
+            Matrix[] matrices = Matrix.Split(m, 3);
+            if (matrices[0] == Matrix.I(3))
+            {
+                return new CubicFunction(0, m[0, 3], m[1, 3], m[2, 3]);
+            }
+            else return new CubicFunction(0, 0, 0, 0);
         }
     }
 }
