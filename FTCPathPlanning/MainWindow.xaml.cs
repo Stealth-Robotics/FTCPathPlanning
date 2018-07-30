@@ -211,11 +211,7 @@ namespace FTCPathPlanning
 
         private void P_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == "Name")
-            {
-                
-            }
-            else
+            if (e.PropertyName != "Name")
             {
                 RenderPath(sender as Path);
             }
@@ -294,7 +290,15 @@ namespace FTCPathPlanning
 
         private void Save_Click(object sender, RoutedEventArgs e)
         {
-
+            SaveFileDialog save = new SaveFileDialog();
+            save.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            save.Filter = "Path files (*.path)|*.path";
+            bool success = save.ShowDialog() ?? false;
+            if(success)
+            {
+                PathFileOperations.Write(save.FileName, Paths.Items.Cast<Path>());
+                PathFileOperations.Read(save.FileName);
+            }
         }
 
         private void Add_Click(object sender, RoutedEventArgs e)
@@ -330,7 +334,44 @@ namespace FTCPathPlanning
 
         private void Delete_Click(object sender, RoutedEventArgs e)
         {
+            Path selected = Paths.SelectedItem as Path;
+            if(selected != null)
+            {
+                const string msgFormat = "This will delete the path '{0}' and all subsequent paths. Are you sure you want to continue?";
+                MessageBoxResult result = System.Windows.MessageBox.Show(string.Format(msgFormat, selected.Name),
+                    "Continue?", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
+                if(result == MessageBoxResult.Yes)
+                {
+                    int index = Paths.SelectedIndex;
+                    while(Paths.Items.Count > index)
+                    {
+                        Path item = Paths.Items[index] as Path;
+                        item.PropertyChanged -= P_PropertyChanged;
+                        foreach(RelativePoint p in item.OwnedPoints)
+                        {
+                            Plotter.Children.Remove(p);
+                        }
+                        Plotter.Children.Remove(item.OwnedPolyline);
+                        NonDependencyBinding.CleanupBindingSource(item);
+                        Paths.Items.RemoveAt(index);
+                    }
+                    Paths.SelectedIndex = -1;
+                    Paths.SelectedItem = null;
+                }
+            }
+        }
 
+        private void Open_Click(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog open = new OpenFileDialog();
+            open.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            open.Filter = "Path files (*.path)|*.path";
+            bool success = open.ShowDialog() ?? false;
+            if (success)
+            {
+                IEnumerable<Path> paths = PathFileOperations.Read(open.FileName);
+                //clear out everything we have. move the robot origin. Use Paths_ItemAdded
+            }
         }
     }
 }

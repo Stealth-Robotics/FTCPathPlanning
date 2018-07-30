@@ -8,6 +8,8 @@ using System.Windows;
 using Xceed.Wpf.Toolkit.PropertyGrid.Attributes;
 using Matrices;
 using System.Windows.Shapes;
+using System.Xml;
+using System.Xml.Serialization;
 
 namespace FTCPathPlanning
 {
@@ -15,7 +17,9 @@ namespace FTCPathPlanning
     [CategoryOrder("End Position", 100)]
     public abstract class Path : BindableBase
     {
+        [XmlIgnore]
         public readonly List<RelativePoint> OwnedPoints = new List<RelativePoint>();
+        [XmlIgnore]
         public Polyline OwnedPolyline;
 
         protected List<string> newProps = new List<string>();
@@ -33,7 +37,7 @@ namespace FTCPathPlanning
             {
                 return name;
             }
-            internal set
+            set
             {
                 SetProperty(ref name, value);
             }
@@ -121,6 +125,7 @@ namespace FTCPathPlanning
         [DisplayName("Path Length")]
         [PropertyOrder(100)]
         [Editor(typeof(RangedPositionEditor), typeof(RangedPositionEditor))]
+        [XmlIgnore]
         public double FullLength
         {
             get
@@ -162,6 +167,8 @@ namespace FTCPathPlanning
     [DisplayName("Linear Path")]
     public class LinearPath : Path
     {
+        public LinearPath() : this(null) { }
+
         public LinearPath(string name) : base(name) { }
 
         public override CubicFunction GetFunction()
@@ -182,6 +189,8 @@ namespace FTCPathPlanning
     [CategoryOrder("Guide Point", 2)]
     public class QuadraticPath : Path
     {
+        public QuadraticPath() : this(null) { }
+
         public QuadraticPath(string name) : base(name)
         {
             newProps.Add("Seg1Length");
@@ -230,6 +239,7 @@ namespace FTCPathPlanning
         [DisplayName("First Segment Length")]
         [PropertyOrder(1)]
         [Editor(typeof(RangedPositionEditor), typeof(RangedPositionEditor))]
+        [XmlIgnore]
         public double Seg1Length
         {
             get
@@ -242,6 +252,7 @@ namespace FTCPathPlanning
         [DisplayName("Second Segment Length")]
         [PropertyOrder(2)]
         [Editor(typeof(RangedPositionEditor), typeof(RangedPositionEditor))]
+        [XmlIgnore]
         public double Seg2Length
         {
             get

@@ -79,6 +79,7 @@
     <Compile Include="CubicFunction.cs" />
     <Compile Include="NonDependencyBinding.cs" />
     <Compile Include="PathDescriptors.cs" />
+    <Compile Include="PathFileOperations.cs" />
     <Compile Include="RangedPositionEditor.cs" />
     <Compile Include="RelativePoint.cs" />
     <Page Include="MainWindow.xaml">

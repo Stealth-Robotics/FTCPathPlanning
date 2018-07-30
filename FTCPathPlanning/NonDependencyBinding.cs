@@ -40,6 +40,7 @@ namespace FTCPathPlanning
 
         public static void CleanupBindingSource(INotifyPropertyChanged source)
         {
+            source.PropertyChanged -= Source_PropertyChanged;
             bindingSources.Remove(source);
         }
 
