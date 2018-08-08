@@ -32,6 +32,9 @@
             <RowDefinition Height="5*"/>
             <RowDefinition Height="0.5*"/>
         </Grid.RowDefinitions>
+        <wpf:WindowContainer Name="DialogArea" Panel.ZIndex="5" Grid.RowSpan="3" Grid.ColumnSpan="2" ModalBackgroundBrush="#CC808080">
+            <wpf:MessageBox Name="MessagePopup" CaptionForeground="Gray"/>
+        </wpf:WindowContainer>
         <Image Grid.Column="0" Grid.Row="1" Stretch="Uniform" VerticalAlignment="Center" HorizontalAlignment="Center"
                Source="pack://application:,,,/CascadeEffect.png" Name="Field"
                MouseDown="Image_MouseDown" RenderTransformOrigin="0.5 0.5"/>
@@ -56,6 +59,7 @@
         <Menu Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Height="20" VerticalAlignment="Top">
             <MenuItem Header="_Save" Name="Save" Click="Save_Click"/>
             <MenuItem Header="_Open" Name="Open" Click="Open_Click"/>
+            <MenuItem Header="E_xport" Name="Export" Click="Export_Click"/>
         </Menu>
         <Grid Margin="10 25 10 10" Grid.Row="0" Grid.Column="1" Grid.RowSpan="3">
             <Grid.RowDefinitions>

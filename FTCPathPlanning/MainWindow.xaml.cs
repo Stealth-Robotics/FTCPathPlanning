@@ -16,6 +16,7 @@ using System.Windows.Shapes;
 using Xceed.Wpf.Toolkit;
 using Microsoft.Win32;
 using Xceed.Wpf.Toolkit.PropertyGrid;
+using Xceed.Wpf.Toolkit.Primitives;
 
 namespace FTCPathPlanning
 {
@@ -24,6 +25,11 @@ namespace FTCPathPlanning
     /// </summary>
     public partial class MainWindow : Window
     {
+        private enum MessageType
+        {
+            DeleteItems, None
+        }
+
         public MainWindow()
         {
             InitializeComponent();
@@ -73,10 +79,21 @@ namespace FTCPathPlanning
             Binding yCoord = new Binding("Value");
             yCoord.Source = originY;
             robot.SetBinding(RelativePoint.YPositionProperty, yCoord);
+            
+            //bind the heading arrow's canvas left and top to the robot's
+            Binding arrowX = new Binding();
+            arrowX.Source = robot;
+            arrowX.Path = new PropertyPath(Canvas.LeftProperty);
+            BindingOperations.SetBinding(originHeading, Canvas.LeftProperty, arrowX);
 
-            //center the heading arrow
-            Canvas.SetLeft(originHeading, Plotter.ActualWidth / 2);
-            Canvas.SetTop(originHeading, Plotter.ActualHeight / 2);
+            Binding arrowY = new Binding();
+            arrowY.Source = robot;
+            arrowY.Path = new PropertyPath(Canvas.TopProperty);
+            BindingOperations.SetBinding(originHeading, Canvas.TopProperty, arrowY);
+
+            //old code, manually center
+            //Canvas.SetLeft(originHeading, Plotter.ActualWidth / 2);
+            //Canvas.SetTop(originHeading, Plotter.ActualHeight / 2);
 
             //test area
         }
@@ -132,13 +149,14 @@ namespace FTCPathPlanning
 
         private void robot_PositionChanged(object sender, PositionChangedEventArgs e)
         {
-            Canvas.SetLeft(originHeading, ftToPx(robot.XPosition, false));
-            Canvas.SetTop(originHeading, ftToPx(robot.YPosition, true));
-            //set the first path's start position
-            if(Paths.Items.Count > 0)
-            {
-                (Paths.Items[0] as Path).SetStartPoint(originX.Value ?? 0, originY.Value ?? 0);
-            }
+            //now bound
+            //Canvas.SetLeft(originHeading, ftToPx(robot.XPosition, false));
+            //Canvas.SetTop(originHeading, ftToPx(robot.YPosition, true));
+            //set the first path's start position - possibly bind this on creation
+            //if(Paths.Items.Count > 0)
+            //{
+                //(Paths.Items[0] as Path).SetStartPoint(originX.Value ?? 0, originY.Value ?? 0);
+            //}
         }
 
         private void originAngle_ValueChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
@@ -155,6 +173,16 @@ namespace FTCPathPlanning
             {
                 //this is the only path
                 p.SetStartPoint(originX.Value ?? 0, originY.Value ?? 0);
+                //Todo: make this a binding as well
+                Binding firstX = new Binding("StartX");
+                firstX.Mode = BindingMode.TwoWay;
+                firstX.Source = p;
+                BindingOperations.SetBinding(originX, DoubleUpDown.ValueProperty, firstX);
+
+                Binding firstY = new Binding("StartY");
+                firstY.Mode = BindingMode.TwoWay;
+                firstY.Source = p;
+                BindingOperations.SetBinding(originY, DoubleUpDown.ValueProperty, firstY);
             }
             else
             {
@@ -218,6 +246,7 @@ namespace FTCPathPlanning
         }
 
         SolidColorBrush darkOrange = new SolidColorBrush(Colors.DarkOrange);
+        SolidColorBrush gray = new SolidColorBrush(Colors.Gray);
         private RelativePoint makeGuidePoint()
         {
             RelativePoint p = new RelativePoint() { Stroke = darkOrange, Diameter = 8 };
@@ -290,14 +319,21 @@ namespace FTCPathPlanning
 
         private void Save_Click(object sender, RoutedEventArgs e)
         {
-            SaveFileDialog save = new SaveFileDialog();
-            save.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-            save.Filter = "Path files (*.path)|*.path";
-            bool success = save.ShowDialog() ?? false;
-            if(success)
+            if (Paths.Items.Count > 0)
             {
-                PathFileOperations.Write(save.FileName, Paths.Items.Cast<Path>());
-                PathFileOperations.Read(save.FileName);
+                SaveFileDialog save = new SaveFileDialog();
+                save.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                save.Filter = "Path files (*.path)|*.path";
+                bool success = save.ShowDialog() ?? false;
+                if (success)
+                {
+                    PathFileOperations.Write(save.FileName, Paths.Items.Cast<Path>());
+                    ShowMessageBox("Saved path file at " + save.FileName, "Success!", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+            else
+            {
+                ShowMessageBox("You don't have anything to save!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -338,27 +374,126 @@ namespace FTCPathPlanning
             if(selected != null)
             {
                 const string msgFormat = "This will delete the path '{0}' and all subsequent paths. Are you sure you want to continue?";
-                MessageBoxResult result = System.Windows.MessageBox.Show(string.Format(msgFormat, selected.Name),
-                    "Continue?", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
-                if(result == MessageBoxResult.Yes)
-                {
-                    int index = Paths.SelectedIndex;
-                    while(Paths.Items.Count > index)
-                    {
-                        Path item = Paths.Items[index] as Path;
-                        item.PropertyChanged -= P_PropertyChanged;
-                        foreach(RelativePoint p in item.OwnedPoints)
-                        {
-                            Plotter.Children.Remove(p);
-                        }
-                        Plotter.Children.Remove(item.OwnedPolyline);
-                        NonDependencyBinding.CleanupBindingSource(item);
-                        Paths.Items.RemoveAt(index);
-                    }
-                    Paths.SelectedIndex = -1;
-                    Paths.SelectedItem = null;
-                }
+                ShowMessageBox(string.Format(msgFormat, selected.Name), "Continue?",
+                    MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No, MessageType.DeleteItems);
             }
+        }
+
+        private void MessagePopup_Closed(object sender, EventArgs e)
+        {
+            Xceed.Wpf.Toolkit.MessageBox m = sender as Xceed.Wpf.Toolkit.MessageBox;
+            if ((MessageType)m.Resources["type"] == MessageType.DeleteItems && m.MessageBoxResult == MessageBoxResult.Yes)
+            {
+                int index = Paths.SelectedIndex;
+                DeleteAt(index);
+            }
+        }
+
+        private void GranularityPopup_Closed(object sender, EventArgs e)
+        {
+            ChildWindow popup = sender as ChildWindow;
+            DoubleUpDown result = (DoubleUpDown)popup.Resources["value"];
+            string file = (string)popup.Resources["file"];
+            IEnumerable<Path> paths = (IEnumerable<Path>)popup.Resources["paths"];
+            bool success = (bool)(popup.Resources["success"] ?? false);
+
+            if (success)
+            {
+                PathFileOperations.Export(file, paths, result.Value ?? 0);
+                ShowMessageBox("Exported motion profile at " + file, "Success!", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+
+        private void PopupClosed(object sender, EventArgs e)
+        {
+            WindowControl m = sender as WindowControl;
+            DialogArea.Children.Remove(m);
+        }
+
+        private void ShowMessageBox(string text, string caption, MessageBoxButton button = MessageBoxButton.OK,
+            MessageBoxImage icon = MessageBoxImage.None, MessageBoxResult defaultResult = MessageBoxResult.None,
+            MessageType specialType = MessageType.None)
+        {
+            Xceed.Wpf.Toolkit.MessageBox popup = new Xceed.Wpf.Toolkit.MessageBox();
+            popup.CaptionForeground = gray;
+            popup.Closed += MessagePopup_Closed;
+            popup.Closed += PopupClosed;
+            popup.Resources["type"] = specialType;
+            DialogArea.Children.Add(popup);
+            popup.ShowMessageBox(text, caption, button, icon, defaultResult);
+        }
+
+        private void MakeGranularityBox(string filename, IEnumerable<Path> paths)
+        {
+            ChildWindow popup = new ChildWindow();
+            popup.MinWidth = 400;
+            popup.MinHeight = 100;
+            popup.CaptionForeground = gray;
+            popup.Caption = "Enter a value";
+            popup.WindowStartupLocation = Xceed.Wpf.Toolkit.WindowStartupLocation.Center;
+            popup.Closed += GranularityPopup_Closed;
+            popup.Resources["file"] = filename;
+            popup.Resources["paths"] = paths;
+            Grid layoutRoot = new Grid() { Margin = new Thickness(10) };
+            StackPanel inputRegion = new StackPanel()
+            {
+                Orientation = Orientation.Horizontal,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Top
+            };
+            StackPanel buttonRegion = new StackPanel()
+            {
+                Orientation = Orientation.Horizontal,
+                HorizontalAlignment = HorizontalAlignment.Right,
+                VerticalAlignment = VerticalAlignment.Bottom
+            };
+            Extensions.SetSpacing(inputRegion, new Thickness(2));
+            Extensions.SetSpacing(buttonRegion, new Thickness(2));
+            popup.Content = layoutRoot;
+            layoutRoot.Children.Add(inputRegion);
+            layoutRoot.Children.Add(buttonRegion);
+
+            inputRegion.Children.Add(new TextBlock() { Text = "Interval:" });
+            DoubleUpDown intervalPicker = new DoubleUpDown() { Increment = 0.01, Minimum = 0, Value = 0.01, Maximum = 1, MinWidth = 100, FormatString = "F2" };
+            popup.Resources["value"] = intervalPicker;
+            inputRegion.Children.Add(intervalPicker);
+
+            Button cancel = new Button { Content = "Cancel", MinWidth = 100, Padding = new Thickness(2) };
+            Button ok = new Button { Content = "Ok", MinWidth = 100, Padding = new Thickness(2) };
+            cancel.Click += (obj, args) =>
+            {
+                popup.Resources["success"] = false;
+                popup.Close();
+            };
+            ok.Click += (obj, args) =>
+            {
+                popup.Resources["success"] = true;
+                popup.Close();
+            };
+            buttonRegion.Children.Add(cancel);
+            buttonRegion.Children.Add(ok);
+
+            DialogArea.Children.Add(popup);
+            popup.IsModal = true;
+            popup.Show();
+        }
+
+        private void DeleteAt(int index)
+        {
+            while (Paths.Items.Count > index)
+            {
+                Path item = Paths.Items[index] as Path;
+                item.PropertyChanged -= P_PropertyChanged;
+                foreach (RelativePoint p in item.OwnedPoints)
+                {
+                    Plotter.Children.Remove(p);
+                }
+                Plotter.Children.Remove(item.OwnedPolyline);
+                NonDependencyBinding.CleanupBindingSource(item);
+                Paths.Items.RemoveAt(index);
+            }
+            Paths.SelectedIndex = -1;
+            Paths.SelectedItem = null;
         }
 
         private void Open_Click(object sender, RoutedEventArgs e)
@@ -369,8 +504,39 @@ namespace FTCPathPlanning
             bool success = open.ShowDialog() ?? false;
             if (success)
             {
-                IEnumerable<Path> paths = PathFileOperations.Read(open.FileName);
+                List<Path> paths = PathFileOperations.Read(open.FileName);
                 //clear out everything we have. move the robot origin. Use Paths_ItemAdded
+                DeleteAt(0);
+                if(paths.Count() >= 1)
+                {
+                    originX.Value = paths[0].StartX;
+                    originY.Value = paths[0].StartY;
+                    foreach (Path p in paths)
+                    {
+                        Paths.Items.Add(p);
+                        Paths_ItemAdded(p);
+                    }
+                }
+            }
+        }
+
+        private void Export_Click(object sender, RoutedEventArgs e)
+        {
+            if (Paths.Items.Count > 0)
+            {
+                SaveFileDialog save = new SaveFileDialog();
+                save.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                save.Filter = "Motion profile files (*.mprof)|*.mprof";
+                bool success = save.ShowDialog() ?? false;
+                if (success)
+                {
+                    //todo get granularity in a popup. make it a special type which will handle this.
+                    MakeGranularityBox(save.FileName, Paths.Items.Cast<Path>());
+                }
+            }
+            else
+            {
+                ShowMessageBox("You don't have anything to export!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }
