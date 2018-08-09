@@ -169,6 +169,7 @@ namespace FTCPathPlanning
         private void Paths_ItemAdded(object item)
         {
             Path p = item as Path;
+            Paths.SelectedItem = p;
             if (Paths.Items.Count == 1)
             {
                 //this is the only path
@@ -434,7 +435,7 @@ namespace FTCPathPlanning
             popup.Closed += GranularityPopup_Closed;
             popup.Resources["file"] = filename;
             popup.Resources["paths"] = paths;
-            Grid layoutRoot = new Grid() { Margin = new Thickness(10) };
+            Grid layoutRoot = new Grid() { Margin = new Thickness(7) };
             StackPanel inputRegion = new StackPanel()
             {
                 Orientation = Orientation.Horizontal,
@@ -454,7 +455,16 @@ namespace FTCPathPlanning
             layoutRoot.Children.Add(buttonRegion);
 
             inputRegion.Children.Add(new TextBlock() { Text = "Interval:" });
-            DoubleUpDown intervalPicker = new DoubleUpDown() { Increment = 0.01, Minimum = 0, Value = 0.01, Maximum = 1, MinWidth = 100, FormatString = "F2" };
+            DoubleUpDown intervalPicker = new DoubleUpDown()
+            {
+                Increment = 0.01,
+                Minimum = 0,
+                Value = 0.01,
+                Maximum = 1,
+                MinWidth = 100,
+                FormatString = "F2",
+                MouseWheelActiveTrigger = MouseWheelActiveTrigger.MouseOver
+            };
             popup.Resources["value"] = intervalPicker;
             inputRegion.Children.Add(intervalPicker);
 

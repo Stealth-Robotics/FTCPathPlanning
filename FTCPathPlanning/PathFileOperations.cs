@@ -62,12 +62,16 @@ namespace FTCPathPlanning
         private static void WriteDistancePoint(double x, double start, int direction, CubicFunction func, CubicFunction deriv, StreamWriter file)
         {
             double dist = Math.Abs(func.IntegrateLength(start, x));
-            double angle = Math.Atan(deriv.Evaluate(x)) * 180 / Math.PI - 90;
+            double angle = Math.Atan(deriv.Evaluate(x)) * 180 / Math.PI;
             //if we're moving to the left, that means we just flip the wheels around
             if (direction < 0)
             {
                 angle += 180;
             }
+            //subtract 90 degrees, while making sure that the angle is positive
+            angle += 270;
+            //range from 0 to 360.
+            angle %= 360;
             file.WriteLine("{0},{1}", dist, angle);
         }
     }
