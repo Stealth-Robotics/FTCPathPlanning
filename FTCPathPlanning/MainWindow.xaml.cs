@@ -37,8 +37,7 @@ namespace FTCPathPlanning
 
         private void Image_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            //on right click move the robot origin. Left click will handle placement of points
-            if (e.RightButton == MouseButtonState.Pressed)
+            if (e.LeftButton == MouseButtonState.Pressed)
             {
                 Point pos = e.GetPosition(Plotter);
                 Canvas.SetLeft(robot, pos.X);
@@ -79,21 +78,6 @@ namespace FTCPathPlanning
             Binding yCoord = new Binding("Value");
             yCoord.Source = originY;
             robot.SetBinding(RelativePoint.YPositionProperty, yCoord);
-            
-            //bind the heading arrow's canvas left and top to the robot's
-            Binding arrowX = new Binding();
-            arrowX.Source = robot;
-            arrowX.Path = new PropertyPath(Canvas.LeftProperty);
-            BindingOperations.SetBinding(originHeading, Canvas.LeftProperty, arrowX);
-
-            Binding arrowY = new Binding();
-            arrowY.Source = robot;
-            arrowY.Path = new PropertyPath(Canvas.TopProperty);
-            BindingOperations.SetBinding(originHeading, Canvas.TopProperty, arrowY);
-
-            //old code, manually center
-            //Canvas.SetLeft(originHeading, Plotter.ActualWidth / 2);
-            //Canvas.SetTop(originHeading, Plotter.ActualHeight / 2);
 
             //test area
         }
@@ -157,13 +141,6 @@ namespace FTCPathPlanning
             //{
                 //(Paths.Items[0] as Path).SetStartPoint(originX.Value ?? 0, originY.Value ?? 0);
             //}
-        }
-
-        private void originAngle_ValueChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
-        {
-            originAngle.Value %= 360;
-            if (originAngle.Value < 0)
-                originAngle.Value += 360;
         }
 
         private void Paths_ItemAdded(object item)

@@ -7,7 +7,7 @@
         xmlns:local="clr-namespace:FTCPathPlanning"
         xmlns:wpf="http://schemas.xceed.com/wpf/xaml/toolkit"
         mc:Ignorable="d" WindowStartupLocation="CenterScreen"
-        Title="MainWindow" Height="600" Width="900" Loaded="Window_Loaded">
+        Title="Swerve Drive Path Profiler" Height="600" Width="900" Loaded="Window_Loaded">
     <Window.Resources>
         <Style TargetType="wpf:DoubleUpDown" x:Key="positionalSpinner">
             <Setter Property="ClipValueToMinMax" Value="True"/>
@@ -41,14 +41,6 @@
         <Canvas Grid.Column="0" Grid.Row="1" Name="Plotter" VerticalAlignment="Center" HorizontalAlignment="Center" SizeChanged="Plotter_SizeChanged"
                 Height="{Binding ElementName=Field, Path=ActualHeight}" Width="{Binding ElementName=Field, Path=ActualWidth}">
             <local:RelativePoint x:Name="robot" Stroke="Black" Diameter="15" Panel.ZIndex="1" PositionChanged="robot_PositionChanged"/>
-            <Image Source="pack://application:,,,/A very bad arrow.png" Name="originHeading" RenderTransformOrigin="0.5 1" Panel.ZIndex="1">
-                <Image.RenderTransform>
-                    <TransformGroup>
-                        <RotateTransform Angle="{Binding ElementName=originAngle, Path=Value}"/>
-                        <TranslateTransform X="-15" Y="-30"/>
-                    </TransformGroup>
-                </Image.RenderTransform>
-            </Image>
         </Canvas>
         <StackPanel Grid.Column="0" Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center"
                     local:Extensions.Spacing="3 0 0 0" Margin="149,8,157,7">
@@ -75,11 +67,6 @@
                     <!--<TextBox Name="originY" Text="0.00" Width="75" GotFocus="origin_GotFocus" LostFocus="origin_LostFocus"/>-->
                     <wpf:DoubleUpDown Name="originY" Style="{StaticResource positionalSpinner}"/>
                     <TextBlock Text=")"/>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="Initial Robot Heading: "/>
-                    <wpf:DoubleUpDown Name="originAngle" Style="{StaticResource positionalSpinner}" ValueChanged="originAngle_ValueChanged"
-                                      ClipValueToMinMax="False" Minimum="{x:Null}" Maximum="{x:Null}" Increment="5"/>
                 </StackPanel>
                 <Separator Foreground="Gray"/>
             </StackPanel>
@@ -124,8 +111,6 @@
                 <wpf:PropertyGrid Grid.Row="0" Grid.Column="1" Grid.RowSpan="2" Name="Props"
                                   SelectedObject="{Binding ElementName=Paths, Path=SelectedItem}"/>
             </Grid>
-            <!--<wpf:CollectionControl Selector.SelectionChanged="Paths_SelectionChanged" ItemAdded="Paths_ItemAdded"
-                                   Grid.Row="1" Name="Paths" PropertiesLabel="Path Settings:" TypeSelectionLabel="Path Type:"/>-->
         </Grid>
     </Grid>
 </Window>
